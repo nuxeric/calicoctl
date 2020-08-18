@@ -27,7 +27,7 @@ import (
 
 func Apply(args []string) error {
 	doc := constants.DatastoreIntro + `Usage:
-  calicoctl apply --filename=<FILENAME> [--config=<CONFIG>] [--namespace=<NS>]
+  calicoctl apply --filename=<FILENAME> [--config=<CONFIG>] [--namespace=<NS>] [--dry-run]
 
 Examples:
   # Apply a policy using the data in policy.yaml.
@@ -46,6 +46,8 @@ Options:
   -n --namespace=<NS>       Namespace of the resource.
                             Only applicable to NetworkPolicy, NetworkSet, and WorkloadEndpoint.
                             Uses the default namespace if not specified.
+  -d --dry-run              Dry run of calicoctl apply.
+                            Checks the validity and syntax of policies before applying.
 
 Description:
   The apply command is used to create or replace a set of resources by filename
@@ -95,7 +97,9 @@ Description:
 	results := common.ExecuteConfigCommand(parsedArgs, common.ActionApply)
 	log.Infof("results: %+v", results)
 
-	if results.FileInvalid {
+	if results.NumResources == 0 && parsedArgs["--dry-run"] == true {
+		fmt.Println("No syntax problems, file is ready to be applied")
+	} else if results.FileInvalid {
 		return fmt.Errorf("Failed to execute command: %v", results.Err)
 	} else if results.NumHandled == 0 {
 		if results.NumResources == 0 {
